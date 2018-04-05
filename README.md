@@ -1,0 +1,1 @@
+LocalStoragify.JS
