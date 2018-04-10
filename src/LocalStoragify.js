@@ -4,25 +4,30 @@
 	Version number will be gotten from a separate location on the server (/js/_config.min.js), and if version number does not match the saved version number,
 	the entire localStorage will be dumped and a reload will be forced.
 
-	When pulled out of here, the HTML will be saved as window.ff.[filename], so that any HTML page can be rendered immediately.
-	Scripts will be saved as window.js.[filename], so that JS can inject it into a <script id="loadedJS"></script> tag.
-	CSS will be saved as window.css.[filename], so that JS can inject it into a <style id="loadedCSS"></style> tag.
+	When pulled out of here, the HTML will be saved as window.files.html.[filename], so that any HTML page can be rendered immediately.
+	Scripts will be injected it into a <script id="loadedJS"></script> tag.
+	CSS will be injected it into a <style id="loadedCSS"></style> tag.
 */
 
 // Files To Load
 var ftl = [
-	// HTML
 	{
-		name: "name",
-		type: "type",
-		path: "path"
+		name: "name to access by (remove spaces)",
+		type: "type (html, js, css)",
+		path: "path relative to application's index.html"
 	}
 ],
+// Short reference name for the length
 ftll = ftl.length,
+// Flag to determine if the application should reload after files are downloaded
 rl = false,
+// Current index
 i = 0,
+// JS index (for script tag)
 jsi = 0,
+// CSS index (for style tag)
 cssi = 0,
+// Loop starter function
 lA = function(x) {
     // call itself
     lF(x[i],function(){
@@ -30,13 +35,15 @@ lA = function(x) {
         i++;
         // any more items in array?
         if(i < x.length) {
-         	lA(x);   
+			// run with next item
+         	lA(x);
         } else {
+			// else call the done function
 			done();
 		}
     }); 
 };
-window.ff = {
+window.files = {
 	"html": {}
 };
 
@@ -54,9 +61,9 @@ b.onreadystatechange = function() {
 b.send();
 
 function checkVersion() {
-	console.log("My Version: " + localStorage.getItem("firesVersion"));
-	console.log("Remote Version: " + window.firesVersion);
-	if(localStorage.getItem("firesVersion") != window.firesVersion) {
+	console.log("My Version: " + localStorage.getItem("appVersion"));
+	console.log("Remote Version: " + window.appVersion);
+	if(localStorage.getItem("appVersion") != window.appVersion) {
 		localStorage.clear();
 	}
 
@@ -66,7 +73,7 @@ function checkVersion() {
 
 // loop function, o is object, c is callback
 function lF(o,c) {
-	if(localStorage.getItem("firesVersion") != window.firesVersion) {
+	if(localStorage.getItem("appVersion") != window.appVersion) {
 		var b = new XMLHttpRequest();
 		b.open('GET', o.path);
 		b.setRequestHeader("Cache-Control", "max-age=0");
@@ -83,7 +90,7 @@ function lF(o,c) {
 		b.send();
 	} else {
 		if(o.type == "html") {
-			window.ff.html[o.name] = localStorage.getItem(o.type + "-_-" + o.name);
+			window.files.html[o.name] = localStorage.getItem(o.type + "-_-" + o.name);
 		} else if(o.type == "js") {
 			var n = document.createElement("script");
 			n.text = localStorage.getItem(o.type + "-_-" + o.name);
@@ -106,49 +113,9 @@ function lF(o,c) {
 }
 
 function done() {
-	// Download the Images if needed
-	if(localStorage.getItem("LIS") && (localStorage.getItem("LIS_Year") == window.baseYear) && (localStorage.getItem("LIS_Version") == window.LISVersion)) {
-		if(rl){
-			localStorage.setItem("firesVersion", window.firesVersion);
-			window.location.reload(false);
-		}
-	} else {
-		var b = new XMLHttpRequest();
-		b.open('GET', "i/images.js");
-		b.setRequestHeader("Cache-Control", "max-age=0");
-		b.onreadystatechange = function() {
-			if(b.readyState === XMLHttpRequest.DONE && b.status === 200) {
-				var n = document.createElement("script");
-				n.text = b.responseText;
-				n.id = "js" + (jsi+1);
-				n.type = "text/javascript";
-				document.getElementById("js"+jsi).parentNode.insertBefore(n, document.getElementById("js"+jsi).nextSibling);
-				jsi++;
-
-				var d = window.LISImages;
-				localStorage.setItem('LIS_FIRES', d[0]);
-				localStorage.setItem('LIS_fa-book', d[1]);
-				localStorage.setItem('LIS_fa-desktop', d[2]);
-				localStorage.setItem('LIS_fa-eye', d[3]);
-				localStorage.setItem('LIS_fa-list-ol', d[4]);
-				localStorage.setItem('LIS_fa-lock', d[5]);
-				localStorage.setItem('LIS_fa-object-group', d[6]);
-				localStorage.setItem('LIS_fa-sort-numeric-asc', d[7]);
-				localStorage.setItem('LIS_field', d[8]);
-				localStorage.setItem('LIS_shirt', d[9]);
-				localStorage.setItem('LIS_404', d[10]);
-				localStorage.setItem('LIS', true);
-				localStorage.setItem('LIS_Version', window.LISVersion);
-				localStorage.setItem('LIS_Year', window.baseYear);
-
-				// Set local version
-				localStorage.setItem("firesVersion", window.firesVersion);
-				window.location.reload(false);
-			} else if(b.status === 404) {
-				console.log("Missing item:",b);
-				c();
-			}
-		}
-		b.send();
+	
+	if(rl){
+		localStorage.setItem("appVersion", window.appVersion);
+		window.location.reload(false);
 	}
 }
